@@ -1,5 +1,5 @@
 
-;;; ROM ATMOS V1.1 exigée
+;;; ROM ATMOS V1.1 exigee
 
 #define DISPLAY_ADRESS $BB80
 
@@ -23,22 +23,46 @@ TMPPTR		.dsb 2
 ;;; STOP : 12 octets dispo en début de page 0
 
 
+;;;--------------------------------
+;;  on met le bout de code de detournement du clavier
+;;  dans la page 2 pour eviter tout plantage lié à un HIMEM
+;;  ou autre. 23 octets dispo dans la ROM ATMOS a cet endroit
+;;;---------------------------------
+
+	.bss
+
+	*= $221
+verifDetourn
+	lda $a7
+	cmp #$90
+.(
+	bne suite
+	jmp gGestFunc
+suite
+.)
+	rts
+
+
 	.text
 
 _main
 .(
+	lda #$00
+	ldy #$90
+	jsr $ebd8 ;; HIMEM
 	lda $23C
-	cmp #<gGestFunc
+	cmp #<verifDetourn
 	beq suite
 	sta gGestFuncfin+2
 	lda $23D
 	sta gGestFuncfin+3
-	lda #<gGestFunc
+	lda #<verifDetourn
 	sta $23C
-	lda #>gGestFunc
+	lda #>verifDetourn
 	sta $23D
 suite
 	lda #$0
+	sta FLAGFIN
 	sta flagMark
 	jmp main
 .)
@@ -145,8 +169,6 @@ main
 	ldy #(128+7-MENUHILITE)
 	jsr majMenuItem
 suite
-	lda #$FF
-	sta FLAGFIN
 .)
 boucle
 	lda FLAGFIN
@@ -421,12 +443,16 @@ gGestFunc
 	beq suite1
 	cmp #$A6
 	bne gGestFuncfin
+	lda #0
+	sta $209
 suite1
 	txa
 	pha
 	tya
 	pha
 	php
+	lda #$FF
+	sta FLAGFIN
 	jsr main
 	plp
 	pla

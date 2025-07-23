@@ -1,6 +1,5 @@
 
 P1
-.byt <fFichier      ,>fFichier
 .byt <fNouveau      ,>fNouveau
 .byt <fOuvrir       ,>fOuvrir
 .byt <fFermer       ,>fFermer
@@ -9,15 +8,13 @@ P1
 .byt <fQuitter      ,>fQuitter
 
 P2
-.byt <fEdition   ,>fEdition
 .byt <fAnnuler   ,>fAnnuler
+.byt <fMarquer   ,>fMarquer
 .byt <fCopier    ,>fCopier
 .byt <fColler    ,>fColler
-.byt <fSelect    ,>fSelect
 .byt <fSupprimer ,>fSupprimer
 
 P3
-.byt <fCommandes,>fCommandes
 .byt <fPaper    ,>fPaper
 .byt <fInk      ,>fInk
 .byt <fCls      ,>fCls
@@ -25,7 +22,6 @@ P3
 .byt <fExplode  ,>fExplode
 
 P4
-.byt <fSysteme, >fSysteme
 .byt <fHdReset, >fHdReset
 .byt <fReset  , >fReset
 .byt <fTime   , >fTime
@@ -47,6 +43,7 @@ fenter
 	lda PROCADDRHIGH,x
 	sta PROCPTR+1
 	ldx CURMENUART
+	dex
 	txa
 	asl
 	clc
@@ -66,10 +63,7 @@ destination
 	
 .)
 
-fFichier
-.(
-	rts
-.)
+
 fNouveau
 .(
 	rts
@@ -92,32 +86,135 @@ fImprimer
 .)
 fQuitter
 .(
-	rts
+	jmp gfin
 .)
 
-
-fEdition
-.(
-	rts
-.)
 
 fAnnuler
 .(
 	rts
 .)
 
-fCopier
+COPIERX
+.dsb 1
+COPIERY 
+.dsb 1
+
+flagMark
+.byt 0
+
+fMarquer
+.(
+	ldx $268
+	lda _ScreenAdressLow,x
+	clc
+	adc $269
+	sta COPIERDEB
+	lda _ScreenAdressHigh,x
+	adc #0
+	sta COPIERDEB+1
+	lda CURMENUART
+	sta flagMark
+	jmp gfin
+.)
+
+fSelectionner
 .(
 	rts
+.)
+
+compteCopie
+.dsb 2
+
+fCopier
+.(
+	lda COPIERDEB
+.(
+	bne suite
+	jmp fin
+suite
+.)
+; calcul de l adresse du deuxième point
+	ldx $268
+	lda _ScreenAdressLow,x
+	clc
+	adc $269
+	sta COPIERFIN
+	lda _ScreenAdressHigh,x
+	adc #0
+	sta COPIERFIN+1
+; fermeture du menu 
+	jsr _gCloseMenu
+
+; on regarde si le marqueur et la position courante sont dans l ordre
+	sec
+	lda COPIERFIN+1
+	sbc COPIERDEB+1
+	bpl suite        ; si positif ou nul: on garde. 
+	lda COPIERFIN+1  ; sinon on echange- octet de poids fort
+	pha
+	lda COPIERDEB+1
+	sta COPIERFIN+1
+	pla
+	sta COPIERDEB+1
+	lda COPIERFIN  ; poids faible
+	pha
+	lda COPIERDEB
+	sta COPIERFIN
+	pla
+	sta COPIERDEB
+suite
+	sec
+	lda COPIERFIN
+	sbc COPIERDEB
+	sta comptCopie
+	lda COPIERFIN+1
+	sbc COPIERDEB+1
+	bne fin ; le tampon de copie ne fait que 256 octets
+	lda COPIERDEB
+	sta TMPPTR
+	lda COPIERDEB+1
+	sta TMPPTR+1
+	ldy comptCopie
+boucle
+	lda (TMPPTR),y
+	sta TAMPCOPIER,y
+	dey
+	bne boucle
+	lda (TMPPTR),y
+	sta TAMPCOPIER,y
+fin
+	lda CURMENUART
+	sta flagMark
+	jmp gfin
 .)
 
 fColler
 .(
-	rts
-.)
+; calcul de l adresse du point de collage
+	ldx $268
+	lda _ScreenAdressLow,x
+	clc
+	adc $269
+	sta TMPPTR
+	lda _ScreenAdressHigh,x
+	adc #0
+	sta TMPPTR+1
+; fermeture du menu 
+	jsr _gCloseMenu
 
-fSelect
-.(
+	ldy comptCopie
+boucle
+	lda TAMPCOPIER,y
+	sta (TMPPTR),y
+	dey
+	bne boucle
+	lda TAMPCOPIER,y
+	sta (TMPPTR),y
+fin
+	lda #0
+	sta flagMark
+	jmp gfin
 	rts
 .)
 
@@ -127,13 +224,14 @@ fSupprimer
 .)
 
 
-fCommandes
-.(
-	rts
-.)
-
 fPaper
 .(
+	jsr _get
+	txa
+	sec
+	sbc #48
+	sta $2e1
+	jsr $e204
 	rts
 .)
 
@@ -144,34 +242,31 @@ fInk
 
 fCls
 .(
-	rts
+	jsr _gCloseMenu
+	jmp $ccce
 .)
 
 fNew
 .(
+	jsr _gCloseMenu
+;	jsr $c6ee
 	rts
 .)
 
 fExplode
 .(
-	jsr $FACB
-	rts
+	jmp $FACB
 .)
 
-
-fSysteme
-.(
-	rts
-.)
 
 fHdReset
 .(
-	rts
+	jmp ($fffc)
 .)
 
 fReset
 .(
-	rts
+	jmp $247
 .)
 
 fTime

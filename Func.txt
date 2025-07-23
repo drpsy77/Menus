@@ -1,0 +1,30 @@
+
+Je veux utiliser la touche FUNC pour activer le menu.
+Lorsque la touche FUNC est enfoncée, si on appuie sur une flèche ou sur ENTER, ça exécute des fonctions du Menu.
+Lorsqu'on relache la touche FUNC, on doit s'assurer que le menu se rétracte
+
+ON va pour ça utiliser l'interruption IRQ et traiter prioritairement la touche FUNC avant de rendre la main à l'IRQ normale.
+
+Idée de process:
+Evénement Interruption
+On laisse tourner la routine de scrute du clavier
+
+Entrée dans le sous-programme de gestion du clavier MENU
+- est-ce que FUNC est enfoncée ? #209 = #A5
+- NON: on JUMP vers la gestion standard de l'interruption OU on sort en RTI
+- OUI: on teste l'appui sur les touches. Si pas de touche, on JUMP vers la gestion standard de l'interruption
+- Si Touche pressée:
+  - Teste sur ENTER: 
+          - Si pas de selection, on JUMP vers la flèche bas.
+          - on exécute la commande selectionnee par le menu
+		  - on sort de l'interruption et on rend la main à l'interpréteur
+  - Teste sur les fleches:
+          - patati patata
+		  - on sort de l'interruption et on rend la main à l'interpreteur
+  - autre touche: on JUMP vers la gestion standard de l'interruption
+
+
+
+#24A et #24C : adresse à renseigner pour s'exécuter après la scrutation du clavier. Terminer le programme par RTI
+#245 et #246 : adresse à renseigner pour s'exécuter avant la scrutation du clavier. Terminer le programme par appel à EE22
+

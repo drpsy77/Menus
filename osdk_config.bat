@@ -4,7 +4,7 @@
 :: Set the build paremeters
 ::
 
-SET OSDKADDR=$A600
+SET OSDKADDR=$9000
 SET OSDKNAME=Menu
 SET OSDKFILE=main print fonctions
 SET OSDKLINK=-B
