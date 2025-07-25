@@ -1,3 +1,12 @@
+;;; MENUS DEROULANTS POUR ORIC ATMOS
+;;; Lang: pure ASS
+;;; ROM ATMOS V1.1 
+;;; Author: DRPSY aka Pierre Garnier
+
+;;; implementation des fonctions liees aux menus
+;;; en cas d ajout de code, bien s assurer de la place disponible
+;;; et le cas echeant, modifier l adresse d implementation dans le osdk_config.bat
+;;; penser aussi a modifier la valeur AY envoyee a HIMEM dans le main.s
 
 ;;; L adresse de chaque fonction est mise dans un tableau de pointeur en relation avec 
 ;;; M1, M2, ... on doit retrouver exactement la meme position pour chaque fonction dans Mx et dans Px
