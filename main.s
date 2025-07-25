@@ -52,9 +52,20 @@ suite
 	rts
 .)
 
+;;; Tampon pour sauvegarder la partie de l ecran qui sera recouverte par le menu deroulant
+
 TAMPON
 .dsb 100
 
+;;; pointeur vers la zone Tampon
+;;; pas utile dans cette version mais cela permettrait de gerer une pile de tampons dans la meme zone
+TAMPADDR
+.byt <TAMPON
+.byt >TAMPON
+
+;;; Tampon pour le COPIER/COLLER et les pointeurs DEB et FIN de selection (adresses de l ecran)
+;;; comptCopie est le nombre de caractères à recopier qui rend inutile COPIERFIN une fois qu il est calcule.
+;;; un pointeur en page 0 est aussi utilise pour l adressage indirect
 TAMPCOPIER
 .dsb 250
 COPIERDEB
@@ -64,7 +75,7 @@ COPIERFIN
 comptCopie
 .byt 0
 
-;;; code extrait de la ROM EB78
+;;; code extrait de la ROM EB78. On boucle tant qu un caractere n est pas tape
 
 _get
 	lda $2df
@@ -76,13 +87,23 @@ _get
 	lda #0
 	rts
 
-
+;;; indicateur pour dire que le MENU est actif ou pas. Permet de sortir de la fonction principale
 FLAGFIN
 .dsb 1
 
+;;; Liste des coordonnees X des titres de menu.
+;;; Si on change le nombre de menus, il faut ajouter ou retirer un octet. 
+;;; Elles sonc calculees dans le code.
+;;; Le premier designe la position a partir de laquelle on affiche le premier menu.
 COORDX
 .byt 1, 0, 0, 0, 0
 
+;;; Chaque Menu est designe par une etiquette M1, M2, ...
+;;; Ensuite:
+;;;  Octet 1 : nombre d articles de menu hors titre
+;;;  Octer 2 : largeur du menu = largeur de la chaine la plus large + 2
+;;;  Liste des chaines de caracteres a afficher, terminees par 0 (comme en C)
+;;;  Piste d optimisation: faire comme le BASIC. ajouter 128 au dernier caractere. 
 M1
 .byt 6,13
 .asc "Fichier",0
@@ -119,6 +140,8 @@ M4
 .asc "Time",0
 .asc "Clock",0
 
+;;; Les etiquettes sont mises dans un tableau de pointeurs 
+;;; qui permettra facilement de switcher d un menu a l autre
 
 MENUS
 .byt 4
@@ -127,17 +150,19 @@ MENUADDRLOW
 MENUADDRHIGH
 .byt >M1, >M2, >M3, >M4
 
-
+;;; MENU selectionne. Cette valeur est conservee lorsqu on quitte et qu on revient
 CURMENU
 .byt 0
 
+;;; ARTICLE DE MENU. Cette valeur n est pas conservee car en sortant, on ferme les menus
 CURMENUART
 .byt 0
 
-TAMPADDR
-.byt <TAMPON
-.byt >TAMPON
-
+;;; Programme PRINCIPAL
+;;; On initie l affichage du menu a chaque fois, car on ne sait pas si la barre de statut 
+;;; n a pas ete mise a jour par ailleurs (CLOAD par exemple)
+;;;
+;;; flagMark contient l article de menu suivant pour la gestion du copier coller
 principal
 .(
 	jsr hideCursor
@@ -167,6 +192,9 @@ sortboucle
 	jmp showCursor
 .)
 
+;;; on inhibe le curseur et on change la repetition des touches
+;;; peut être ajuste
+
 hideCursor
 .(
 	lda #10
@@ -189,7 +217,8 @@ showCursor
 	rts
 .)
 
-
+;;; Affichage de la barre de menu dans la ligne  de statut 0
+;;; alternative non exploree: changer le nombre de lignes scrollables et se mettre au dessus ou en dessous
 affMenuBar
 .(
 
@@ -240,7 +269,7 @@ boucle
 .)
 
 
-
+;;; Test des touches. les noms des etiquettes de fonction sont parlantes
 inKeys
 .(
 	jsr _get
@@ -315,6 +344,7 @@ ggauchedroite
 	sta CURMENU
 	jmp affMajMenu
 
+;;; ghaut permet de fermer le menu. on appelle ghaut avant de quitter le menu
 ghaut
 	ldx CURMENUART
 .(
@@ -337,6 +367,8 @@ suite
 	dec CURMENUART
 	ldy #(128+7-MENUHILITE)
 	jmp majMenuItem
+
+;;; gbas permet de derouler le menu
 
 gbas
 	lda CURMENUART
@@ -373,6 +405,7 @@ suite
 
 .)
 
+;;; Pour sortir, on met a 0 le FLAGFIN et on enroule le menu
 gfin
 	lda #0
 	sta FLAGFIN
@@ -389,6 +422,16 @@ suite
 
 ;;; On utilise la vectorisation de la saisie clavier qui permet un saut vers notre routine
 ;;; au sein de la saisie clavier de l interpréteur
+;;; Concretement, on interromp l interpreteur en plein travail de capture des saisies clavier
+;;; et on lui rend la main exactement la ou il est reste
+;;; mais on ne se substitue pas a lui
+;;; donc au retour, le buffer du BASIC sera identique
+;;; AMELIORATION A ENVISAGER: permettre le COLLER dans le BUFFER BASIC pour ne pas avoir a faire de CTRL-A
+;;; ici, on teste les touches de fonction : $209
+;;; on pourrait faire d autres choses comme des raccourcis clavier directs
+;;; REFERENCE: CEO MAG 348 - la touche FUNC par Andre
+;;; pas certain que la sauvegarde des registres et de la pile soient utiles mais j ai eu plein de pb 
+;;; avec la pile, et je ne sais pas ce dont le BASIC a reellement besoin alors...
 
 gGestFunc
 	php
@@ -419,6 +462,8 @@ gGestFuncfin
 gFinAdr
 	jmp $0123
 
+;;; Mise a jour du menu active
+;;; consiste a mettre a jour la couleur d HILITE 
 
 affMajMenu
 .(
@@ -449,7 +494,7 @@ suite
 	rts
 .)
 
-
+;;;Calcul de la fenêtre d affichage du menu: Position WPOSX, WPOSY et dimensions WLENX, WLENY
 ;Récupérer le nombre de lignes du menu dans y
 ;lire les lignes et connaître la longueur max des chaines de caractères des articles de menu
 
@@ -475,6 +520,8 @@ calcPosMenu
 	rts
 .)
 
+;;; Sauvegarde de la partie d ecran qui sera ecrasee par la fenetre dans TAMPON
+;;; Affichage du menu deroule
 sauveEcran
 .( 
 ;;; préparation de la zone tampon
@@ -578,6 +625,8 @@ suite3
 	rts
 .)
 
+;;; Quand on enroule le menu, on remet a l ecran la zone prealablement sauvegardee
+
 restaureEcran
 .(
 	lda TAMPADDR
@@ -671,6 +720,7 @@ suite
 sumtmp
 .dsb 2
 
+;;; Mise a jour de la couleur d hilite de l article de menu selectionne
 majMenuItem
 .(
 

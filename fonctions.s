@@ -1,4 +1,6 @@
 
+;;; L adresse de chaque fonction est mise dans un tableau de pointeur en relation avec 
+;;; M1, M2, ... on doit retrouver exactement la meme position pour chaque fonction dans Mx et dans Px
 P1
 .byt <fNouveau      ,>fNouveau
 .byt <fOuvrir       ,>fOuvrir
@@ -27,6 +29,7 @@ P4
 .byt <fTime   , >fTime
 .byt <fClock  , >fClock
 
+;;; De la meme maniere qu on a fait un tableau des Mx, on fait un tableau des Px
 
 PROCADDRLOW
 .byt <P1, <P2, <P3, <P4
@@ -34,7 +37,11 @@ PROCADDRHIGH
 .byt >P1, >P2, >P3, >P4
 
 
-
+;;; On selectionne d abord le menu pour pointer sur le bon Px
+;;; Puis l article de menu pour pointer sur la bonne ligne dans le Px
+;;; Destination contiendra l adresse de la fonction a appeler.
+;;; Pour ajouter des fonctions, il suffit de les definir avec une etiquette 
+;;; et d ajouter ces etiquettes dans les tableaux ci dessus
 fenter
 .(
 	ldx CURMENU
@@ -224,6 +231,7 @@ fSupprimer
 	rts
 .)
 
+;;; ne fonctionne pas. Si queqlu un a une idee
 
 fPaper
 .(
@@ -247,6 +255,7 @@ fCls
 	jmp $ccce
 .)
 
+;;; ne fonctionne pas
 fNew
 .(
 	jsr _gCloseMenu
