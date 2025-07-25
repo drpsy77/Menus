@@ -452,7 +452,7 @@ suite
 ;;; ici, on teste les touches de fonction : $209
 ;;; on pourrait faire d autres choses comme des raccourcis clavier directs
 ;;; REFERENCE: CEO MAG 348 - la touche FUNC par Andre
-;;; pas certain que la sauvegarde des registres et de la pile soient utiles mais j ai eu plein de pb 
+;;; pas certain que la sauvegarde des registres et du registre d etat soient utiles mais j ai eu plein de pb 
 ;;; avec la pile, et je ne sais pas ce dont le BASIC a reellement besoin alors...
 
 gGestFunc
