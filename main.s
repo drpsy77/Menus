@@ -1,5 +1,13 @@
 
-;;; ROM ATMOS V1.1 exigée
+;;; MENUS DEROULANTS POUR ORIC ATMOS
+;;; Lang: pure ASS
+;;; ROM ATMOS V1.1 
+;;; Author: DRPSY aka Pierre Garnier
+
+
+;;; On peut changer les preferences de couleur
+;;; Les menus deroules seront en inverse video pour ressortir quelle que soit la couleur PAPER
+;;; La colonne INK est ecrasee a l affichage du premier menu
 
 #define DISPLAY_ADRESS $BB80
 
@@ -14,6 +22,8 @@
 
 	*= $00
 
+;;; Pointeurs pour adressage indirect
+
 CURMENUPTR	.dsb 2
 TAMPPTR		.dsb 2
 SCPTR		.dsb 2
@@ -26,6 +36,11 @@ tmpzz		.dsb 2
 
 
 	.text
+;;;--------------------------------
+;;; PROCEDURE D INITIALISATION
+;;; On initie le detournement de la lecture clavier 
+;;; et on relance le BASIC avec affichage du message d accueil
+;;; la memoire disponible est mise a jour car on a prealablement fait un HIMEM
 
 debutProg
 .(
@@ -51,6 +66,9 @@ debutProg
 suite
 	rts
 .)
+
+;;;----------------------------------
+;;;  VARIABLES
 
 ;;; Tampon pour sauvegarder la partie de l ecran qui sera recouverte par le menu deroulant
 
@@ -157,6 +175,10 @@ CURMENU
 ;;; ARTICLE DE MENU. Cette valeur n est pas conservee car en sortant, on ferme les menus
 CURMENUART
 .byt 0
+
+;;;---------------------------------
+;;; CODE
+
 
 ;;; Programme PRINCIPAL
 ;;; On initie l affichage du menu a chaque fois, car on ne sait pas si la barre de statut 
