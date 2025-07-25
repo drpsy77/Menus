@@ -20,34 +20,43 @@ SCPTR		.dsb 2
 PROCPTR		.dsb 2
 TMPPTR		.dsb 2
 
+tmpzz		.dsb 2
+
 ;;; STOP : 12 octets dispo en début de page 0
 
 
 	.text
 
-_main
+debutProg
 .(
+;; REDIRECTION DU TRAITEMENT DES ENTREES CLAVIER
 	lda $23C
 	cmp #<gGestFunc
 	beq suite
-	sta gGestFuncfin+2
+	sta gFinAdr+1
 	lda $23D
-	sta gGestFuncfin+3
+	sta gFinAdr+2
 	lda #<gGestFunc
 	sta $23C
 	lda #>gGestFunc
 	sta $23D
+;; HIMEM
+	ldy #$90
+	lda #$00
+	jsr $ebd8
+;; affichage du menu
+	jsr affMenuBar
+;; BASIC
+	jmp $eccc
 suite
-	lda #$0
-	sta flagMark
-	jmp main
+	rts
 .)
 
 TAMPON
 .dsb 100
 
 TAMPCOPIER
-.dsb 256
+.dsb 250
 COPIERDEB
 .byt 0,0
 COPIERFIN
@@ -55,17 +64,17 @@ COPIERFIN
 comptCopie
 .byt 0
 
-grexit
-	lda $2e0
-grexit2
-	tax
-	lda #0
-	rts 
+;;; code extrait de la ROM EB78
 
 _get
-	jsr gGestFuncfin+1
+	lda $2df
 	bpl _get
-	jmp grexit2
+	and #$7f
+	ldx #00
+	stx $2df
+	tax
+	lda #0
+	rts
 
 
 FLAGFIN
@@ -129,7 +138,7 @@ TAMPADDR
 .byt <TAMPON
 .byt >TAMPON
 
-main
+principal
 .(
 	jsr hideCursor
 	jsr affMenuBar
@@ -140,10 +149,11 @@ main
 	jsr calcPosMenu
 	jsr sauveEcran
 	ldx flagMark
-	inx
 	stx CURMENUART
 	ldy #(128+7-MENUHILITE)
 	jsr majMenuItem
+	lda #0
+	sta flagMark
 suite
 	lda #$FF
 	sta FLAGFIN
@@ -154,19 +164,17 @@ boucle
 	jsr inKeys
 	jmp boucle
 sortboucle
-	jsr gSortie
-	jsr showCursor
-	rts
+	jmp showCursor
 .)
 
 hideCursor
 .(
 	lda #10
 	sta $26A
-	lda #4
-	sta $24E
-	lda #1
-	sta $24F
+;	lda #4
+;	sta $24E
+;	lda #1
+;	sta $24F
 	rts
 .)
 
@@ -174,27 +182,12 @@ showCursor
 .(
 	lda #3
 	sta $26A
-	lda #32
-	sta $24E
-	lda #4
-	sta $24F
+;	lda #32
+;	sta $24E
+;	lda #4
+;	sta $24F
 	rts
 .)
-
-
-initRandom
-.(
-        lda $0276
-        sta $FC
-        sta $FE
-        lda $0277
-        sta $FB
-        sta $FD
-        lda #$80
-        sta $FA
-        rts
-.)
-
 
 
 affMenuBar
@@ -277,13 +270,8 @@ suite
 	cpx #27
 .(
 	bne suite 
+_escape
 	jmp gfin
-suite
-.)
-	cpx #69
-.(
-	bne suite 
-	jmp gtoggle
 suite
 .)
 	cpx #13
@@ -294,7 +282,8 @@ suite
 .)
 	rts
 
-
+tmpDroiteGauche
+.dsb 1
 ggauche
 	lda CURMENU
 .(
@@ -304,7 +293,7 @@ suite
 .)
 	sec
 	sbc #1
-	pha
+	sta tmpDroiteGauche
 	jmp ggauchedroite
 
 gdroite
@@ -317,16 +306,14 @@ gdroite
 suite
 .)
 	txa
-	pha
+	sta tmpDroiteGauche
 
 ggauchedroite
 
 	jsr _gCloseMenu
-	pla
+	lda tmpDroiteGauche
 	sta CURMENU
-	jsr affMajMenu
-	
-	rts
+	jmp affMajMenu
 
 ghaut
 	ldx CURMENUART
@@ -375,9 +362,6 @@ suite
 	ldy #(128+7-MENUHILITE)
 	jmp majMenuItem
 
-gtoggle
-	rts
-
 genter
 .(
 	lda CURMENUART
@@ -403,32 +387,27 @@ suite
 	rts
 .)
 
-;;; EN sortie du programme, on va :
-
-gSortie
-.(
-	rts
-.)
-
 ;;; On utilise la vectorisation de la saisie clavier qui permet un saut vers notre routine
 ;;; au sein de la saisie clavier de l interpréteur
 
 gGestFunc
+	php
 	pha
+	lda FLAGFIN
+	bne gGestFuncfin
 	lda $209
 	cmp #$A5
 .(
 	beq suite1
 	cmp #$A6
-	bne gGestFuncfin
+	beq suite1
+	jmp gGestFuncfin
 suite1
 	txa
 	pha
 	tya
 	pha
-	php
-	jsr main
-	plp
+	jsr  principal
 	pla
 	tay
 	pla
@@ -436,6 +415,8 @@ suite1
 .)
 gGestFuncfin
 	pla
+	plp
+gFinAdr
 	jmp $0123
 
 
@@ -465,11 +446,6 @@ suite
 	tax
 	lda #MENUCOLORFG
 	sta DISPLAY_ADRESS-1,x
-
-	lda CURMENUART
-	beq fend
-	nop
-fend	
 	rts
 .)
 
@@ -537,8 +513,7 @@ sauveEcran
 loopy
 
 ;;; on saute vers l article de menu suivant.  A contient la longueur retournée par strlen+1
-	txa
-	pha
+	stx tmpzz
 	clc
 	lda long_comp+1
 	adc CURMENUPTR
@@ -566,8 +541,7 @@ loopy
 suite6
 .)
 	inc TAMPPTR
-	pla
-	tax
+	ldx tmpzz
 	ldy #0
 loopx
 	lda (SCPTR),y
@@ -692,11 +666,6 @@ suite
 	rts
 .)
 
-plieMenu
-.(
-	
-	rts
-.)
 
 ;;; en y, la couleur d hilite 
 sumtmp

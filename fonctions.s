@@ -113,6 +113,7 @@ fMarquer
 	lda _ScreenAdressHigh,x
 	adc #0
 	sta COPIERDEB+1
+	inc CURMENUART
 	lda CURMENUART
 	sta flagMark
 	jmp gfin
@@ -184,6 +185,7 @@ boucle
 	lda (TMPPTR),y
 	sta TAMPCOPIER,y
 fin
+	inc CURMENUART
 	lda CURMENUART
 	sta flagMark
 	jmp gfin
@@ -212,10 +214,9 @@ boucle
 	lda TAMPCOPIER,y
 	sta (TMPPTR),y
 fin
-	lda #0
+	lda CURMENUART
 	sta flagMark
 	jmp gfin
-	rts
 .)
 
 fSupprimer
