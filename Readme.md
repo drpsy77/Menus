@@ -8,7 +8,7 @@ Alors j'ai voulu recréer quelque chose de semblable sur l'ORIC, déjà dans "la
 Ce qui est implemente:
 - Affichage d'une barre de menus déroulants
 - déplacement avec les flèches <- ->, haut et bas qui permettent de naviguer. Validation de la commande avec ENTER, sortie du menu avec ESC
-- QUand on est dans l'interpréteur ORIC "normal", on appuie sur la touche FUNC our entrer dans le MENU
+- Quand on est dans l'interpréteur ORIC "normal", on appuie sur la touche FUNC our entrer dans le MENU
 - Les commandes suivantes font quelque chose : Quitter, Marquer/Copier/Coller, Explode, Cls, Hd Reset et Reset.
 
 L'interpréteur BASIC est totalement fonctionnel et on peut activer le menu à tout moment. 
