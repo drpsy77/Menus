@@ -1,26 +1,30 @@
 
 ;;; L adresse de chaque fonction est mise dans un tableau de pointeur en relation avec 
 ;;; M1, M2, ... on doit retrouver exactement la meme position pour chaque fonction dans Mx et dans Px
+#define DISPLAY_ADRESS $BB80
+
 P1
 .byt <fNouveau      ,>fNouveau
-.byt <fOuvrir       ,>fOuvrir
-.byt <fFermer       ,>fFermer
 .byt <fEnregistrer  ,>fEnregistrer
+.byt <fCharger      ,>fCharger
 .byt <fImprimer     ,>fImprimer
 .byt <fQuitter      ,>fQuitter
 
 P2
-.byt <fAnnuler   ,>fAnnuler
+.byt <fSelEcr       ,>fSelEcr
+.byt <fEcranMem     ,>fEcranMem
+.byt <fMemEcran     ,>fMemEcran
 .byt <fMarquer   ,>fMarquer
 .byt <fCopier    ,>fCopier
 .byt <fColler    ,>fColler
-.byt <fSupprimer ,>fSupprimer
 
 P3
 .byt <fPaper    ,>fPaper
+.byt <fPaperLine,>fPaperLine
 .byt <fInk      ,>fInk
+.byt <fInkLine  ,>fInkLine
 .byt <fCls      ,>fCls
-.byt <fNew      ,>fNew
+.byt <fFullScr  ,>fFullScr
 .byt <fReset    ,>fReset
 .byt <fHdReset  ,>fHdReset
 
@@ -78,31 +82,86 @@ fNouveau
 .(
 	rts
 .)
-fOuvrir
-.(
-	rts
-.)
-fFermer
-.(
-	rts
-.)
+
+
 fEnregistrer
 .(
 	rts
 .)
+
+fCharger
+.(
+	rts
+.)
+
+;;; Sauve l ecran  dans la memoire courante 
+;;; appel a la fonction definie dans base.s
+fEcranMem
+.(
+	jsr _gCloseMenu
+	ldx #1
+	lda _ScreenAdressLow,x
+	sta CpSrc
+	lda _ScreenAdressHigh,x
+	sta CpSrc+1
+	sec
+	lda SwitchNum
+	sbc #48
+	tax
+	lda SAVSCRADRLOW,x
+	sta CpDest
+	lda SAVSCRADRHIGH,x
+	sta CpDest+1
+	jsr copieBoucle
+	jmp gfin
+.)
+
+fMemEcran
+.(
+	jsr _gCloseMenu
+	ldx #1
+	lda _ScreenAdressLow,x
+	sta CpDest
+	lda _ScreenAdressHigh,x
+	sta CpDest+1
+	sec
+	lda SwitchNum
+	sbc #48
+	tax
+	lda SAVSCRADRLOW,x
+	sta CpSrc
+	lda SAVSCRADRHIGH,x
+	sta CpSrc+1
+	jsr copieBoucle
+	jmp gfin
+.)
+
+;;; switche a l ecran suivant
+fSelEcr
+.(
+	lda SwitchNum
+	cmp SwitchNum+2
+	beq suite
+	inc SwitchNum
+	jmp fin
+suite
+	lda #48
+	sta SwitchNum
+fin
+	jsr ghaut
+	jsr gbas
+	rts
+.)
+
+
 fImprimer
 .(
 	rts
 .)
+
 fQuitter
 .(
 	jmp gfin
-.)
-
-
-fAnnuler
-.(
-	rts
 .)
 
 COPIERX
@@ -129,17 +188,13 @@ fMarquer
 	jmp gfin
 .)
 
-fSelectionner
-.(
-	rts
-.)
 
 compteCopie
 .dsb 2
 
 fCopier
 .(
-	lda COPIERDEB
+	lda COPIERDEB+1
 .(
 	bne suite
 	jmp fin
@@ -181,7 +236,7 @@ suite
 	sta comptCopie
 	lda COPIERFIN+1
 	sbc COPIERDEB+1
-	bne fin ; le tampon de copie ne fait que 256 octets
+	bne fin ; le tampon de copie ne fait que 256 octets on sort si ca depasse
 	lda COPIERDEB
 	sta TMPPTR
 	lda COPIERDEB+1
@@ -229,28 +284,76 @@ fin
 	jmp gfin
 .)
 
-fSupprimer
-.(
-	rts
-.)
-
-;;; ne fonctionne pas. Si queqlu un a une idee
 
 fPaper
 .(
-	jsr _get
-	txa
-	sec
-	sbc #48
+	lda #0
+	sta $02e2
+	inc $26b
+	lda #7
+	and $26b
 	sta $02e1
-	jsr $e204
+	adc #16
+	sta $26b
+	jsr $f204
 	rts
 .)
 
+fPaperLine
+	lda CURMENUART
+	sta flagMark
+	jsr _gCloseMenu
+	ldx $268
+	lda _ScreenAdressLow,x
+	sta TMPPTR
+	lda _ScreenAdressHigh,x
+	sta TMPPTR+1
+	ldy #0
+	clc
+	lda (TMPPTR),y
+	adc #1
+	and #23
+fPaperInkLine
+	sta (TMPPTR),y
+	dec flagMark
+.(
+boucle
+	jsr gbas
+	dec flagMark
+	bne boucle
+.)
+	jmp gbas
+
+
 fInk
 .(
+	lda #0
+	sta $02e2
+	inc $26c
+	lda #7
+	and $26c
+	sta $02e1
+	sta $26c
+	jsr $f210
 	rts
 .)
+
+fInkLine
+	lda CURMENUART
+	sta flagMark
+	jsr _gCloseMenu
+	ldx $268
+	lda _ScreenAdressLow,x
+	sta TMPPTR
+	lda _ScreenAdressHigh,x
+	sta TMPPTR+1
+	ldy #1
+	clc
+	lda (TMPPTR),y
+	adc #1
+	and #7
+	jmp fPaperInkLine
+
 
 fCls
 .(
@@ -258,12 +361,14 @@ fCls
 	jmp $ccce
 .)
 
-;;; ne fonctionne pas
-fNew
+;;; Exploiter toutes les colonnes - ne fonctionne pas
+fFullScr
 .(
-	jsr _gCloseMenu
-;	jsr $c6ee
-	rts
+	sec
+	lda #2
+	sbc $253
+	sta $253
+	jmp gfin
 .)
 
 fExplode
@@ -286,40 +391,25 @@ fReset
 	jmp $247
 .)
 
-fTime
-.(
-	rts
-.)
-
-fClock
-.(
-	rts
-.)
-
 fUltrafast
 	lda #7
-	sta $24E
-	lda #1
-	sta $24F
-	jmp gfin
+	ldx #1
+	jmp fRepetition
 
 fFast  
 	lda #14
-	sta $24E
-	lda #2
-	sta $24F
-	jmp gfin
+	ldx #2
+	jmp fRepetition
 	
 fMedium
 	lda #21
-	sta $24E
-	lda #3
-	sta $24F
-	jmp gfin
+	ldx #3
+	jmp fRepetition
 
 fNormal
 	lda #32
+	ldx #4
+fRepetition
 	sta $24E
-	lda #4
-	sta $24F
+	stx $24F
 	jmp gfin

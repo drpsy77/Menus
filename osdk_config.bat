@@ -4,8 +4,8 @@
 :: Set the build paremeters
 ::
 
-SET OSDKADDR=$9000
+SET OSDKADDR=$8F00
 SET OSDKNAME=Menu
-SET OSDKFILE=main print fonctions
+SET OSDKFILE=main print fonctions base
 SET OSDKLINK=-B
 SET OSDKHEAD=-S1

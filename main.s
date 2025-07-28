@@ -123,31 +123,37 @@ COORDX
 ;;;  Liste des chaines de caracteres a afficher, terminees par 0 (comme en C)
 ;;;  Piste d optimisation: faire comme le BASIC. ajouter 128 au dernier caractere. 
 M1
-.byt 6,12
+.byt 5,14
 .asc "Fichier",0
 .asc "Nouveau",0
-.asc "Ouvrir",0
-.asc "Fermer",0
 .asc "Enregistrer",0
+.asc "Charger",0
 .asc "Imprimer",0
 .asc "Quitter",0
 
+
 M2
-.byt 5,10
+.byt 6,14
 .asc "Edition",0
-.asc "Annuler",0
+.asc "Sel. Ecr "
+SwitchNum .asc "0/6",0
+.asc "Sauvegarder",0
+.asc "Restaurer",0
 .asc "Marquer",0
 .asc "Copier",0
 .asc "Coller",0
-.asc "Supprimer",0
+
+
 
 M3
-.byt 6,9
+.byt 8,11
 .asc "Commandes",0
 .asc "Paper",0
+.asc "Paper line",0
 .asc "Ink",0
+.asc "Ink line",0
 .asc "Cls",0
-.asc "New",0
+.asc "Full Scr",0
 .asc "Reset",0
 .asc "Hd Reset",0
 

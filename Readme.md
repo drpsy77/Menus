@@ -17,7 +17,16 @@ Une partie je trouve intéressante du code, c'est que la fonction qui gère ça 
 Ce qui est implemente:
 - déplacement avec les flèches, validation avec ENTER, sortie avec ESC
 - Pour entrer dans le MENU, appuyer sur la touche FUNC
-- Les commandes suivantes font quelque chose : Quitter, Marquer/Copier/Coller, Explode, Cls, Hd Reset et Reset.
+- Les commandes suivantes font quelque chose : 
+    Quitter, 
+	Marquer/Copier/Coller, 
+	Explode, 
+	Cls, 
+	Hd Reset
+	Reset
+	Sauvegarder/Restaurer/Sel. Ecr : sauvegarde l'écran dans la zone Hires. On peut sauver 7 écrans et les restaurer
+	Paper/Ink/by line : Paper et Ink standard et aussi par ligne, c'est à dire qu'on met à jour la colonne 0 ou 1 de la ligne du curseur
+	vitesse de répétition des touches
 
 L'interpréteur BASIC est totalement fonctionnel et on peut activer le menu à tout moment. Quand on sort du menu, on se retrouve où on en était.
 Il y a un inconvénient : si par exemple on est en train de taper une ligne dans l'interpréteur et qu'on active le menu et que l'on fait un CLS, tout ce qui a déjà été entré est toujours en cours. L'interpréteur reprendra où on l'a laissé.
