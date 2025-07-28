@@ -126,9 +126,9 @@
 974c fHdReset
 9615 P4
 975f fUltrafast
-975f fFast
-975f fMedium
-975f fNormal
+976c fFast
+9779 fMedium
+9786 fNormal
 961d PROCADDRLOW
 9621 PROCADDRHIGH
 9650 destination

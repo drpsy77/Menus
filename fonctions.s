@@ -297,13 +297,29 @@ fClock
 .)
 
 fUltrafast
-fFast  
-fMedium
-fNormal
-	rts
+	lda #7
+	sta $24E
+	lda #1
+	sta $24F
+	jmp gfin
 
+fFast  
+	lda #14
+	sta $24E
+	lda #2
+	sta $24F
+	jmp gfin
+	
+fMedium
+	lda #21
+	sta $24E
+	lda #3
+	sta $24F
+	jmp gfin
+
+fNormal
 	lda #32
 	sta $24E
 	lda #4
 	sta $24F
-	rts
+	jmp gfin
